@@ -3,9 +3,9 @@ GIT_COMMIT = $(shell git rev-parse --short HEAD)
 BUILD_TIME = $(shell date "+%F %T")
 
 define LDFLAGS
-"-X 'github.com/bryant-rh/cloud-dns-exporter/pkg/cmd.Version=${VERSION}' \
- -X 'github.com/bryant-rh/cloud-dns-exporter/pkg/cmd.GitCommit=${GIT_COMMIT}' \
- -X 'github.com/eryajf/cloud-dns-exporter/pkg/cmd.BuildTime=${BUILD_TIME}'"
+"-X 'github.com/bryant-rh/cloud-dns-exporter/cmd/cloud-dns-exporter/cmd.Version=${VERSION}' \
+ -X 'github.com/bryant-rh/cloud-dns-exporter/cmd/cloud-dns-exporter/cmd.GitCommit=${GIT_COMMIT}' \
+ -X 'github.com/bryant-rh/cloud-dns-exporter/cmd/cloud-dns-exporter/cmd.BuildTime=${BUILD_TIME}'"
 endef
 
 
