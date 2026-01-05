@@ -146,7 +146,7 @@ func (c *Metrics) Collect(ch chan<- prometheus.Metric) {
 			var recordCerts []provider.RecordCert
 			recordCertInfoCacheValue, err := public.CertCache.Get(recordCertInfoCacheKey)
 			if err != nil {
-				logger.Error(fmt.Sprintf("[ %s ] get record list failed: %v", recordCertInfoCacheKey, err))
+				logger.Info(fmt.Sprintf("[ %s ] no cert data found in cache, account may have no domains or records", recordCertInfoCacheKey))
 				continue
 			}
 			err = json.Unmarshal(recordCertInfoCacheValue, &recordCerts)

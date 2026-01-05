@@ -16,17 +16,26 @@ import (
 // InitCron 初始化定时任务
 func InitCron() {
 	c := cron.New(cron.WithSeconds())
-	_, _ = c.AddFunc("*/30 * * * * *", func() {
+	// 域名采集：每5分钟执行一次
+	_, _ = c.AddFunc("0 */5 * * * *", func() {
 		loading()
 	})
-	loading()
-	// _, _ = c.AddFunc("03 03 03 * * *", func() {
-	_, _ = c.AddFunc("*/60 * * * * *", func() {
+
+	// 证书采集：每小时执行一次
+	_, _ = c.AddFunc("0 0 */1 * * *", func() {
 		loadingCert()
 		loadingCustomRecordCert()
 	})
+
+	// 启动时先执行域名采集，完成后再执行证书采集
+	logger.Info("开始初始化数据采集...")
+	loading() // 先执行域名采集
+	logger.Info("域名数据采集完成，开始证书数据采集...")
+
+	// 域名采集完成后立即执行证书采集
 	loadingCert()
 	loadingCustomRecordCert()
+	logger.Info("初始化数据采集完成")
 
 	c.Start()
 }
@@ -72,9 +81,12 @@ func loading() {
 				value, err = json.Marshal(records)
 				if err != nil {
 					logger.Error(fmt.Sprintf("[ %s ] marshal record list failed: %v", recordListCacheKey, err))
-				}
-				if err := public.Cache.Set(recordListCacheKey, value); err != nil {
-					logger.Error(fmt.Sprintf("[ %s ] cache record list failed: %v", recordListCacheKey, err))
+				} else {
+					if err := public.Cache.Set(recordListCacheKey, value); err != nil {
+						logger.Error(fmt.Sprintf("[ %s ] cache record list failed: %v", recordListCacheKey, err))
+					} else {
+						logger.Info(fmt.Sprintf("[ %s ] successfully cached %d records", recordListCacheKey, len(records)))
+					}
 				}
 				mu.Unlock()
 			}(cloudProvider, cloudAccount["name"], cloudAccount)
@@ -96,12 +108,22 @@ func loadingCert() {
 				var records []provider.Record
 				rst2, err := public.Cache.Get(recordListCacheKey)
 				if err != nil {
-					logger.Error(fmt.Sprintf("[ %s ] get record list failed: %v", recordListCacheKey, err))
+					logger.Error(fmt.Sprintf("[ %s ] get record list from cache failed: %v", recordListCacheKey, err))
+					return // 缓存获取失败时直接返回
 				}
+
 				err = json.Unmarshal(rst2, &records)
 				if err != nil {
 					logger.Error(fmt.Sprintf("[ %s ] json.Unmarshal error: %v", recordListCacheKey, err))
+					return // JSON解析失败时直接返回
 				}
+
+				if len(records) == 0 {
+					logger.Info(fmt.Sprintf("[ %s ] no records found in cache, skipping cert collection", recordListCacheKey))
+					return // 没有记录时直接返回
+				}
+
+				logger.Info(fmt.Sprintf("[ %s ] found %d records in cache, starting cert collection", recordListCacheKey, len(records)))
 				var recordCertReq []provider.GetRecordCertReq
 				for _, v := range getNewRecord(records) {
 					recordCertReq = append(recordCertReq, provider.GetRecordCertReq{
@@ -124,10 +146,13 @@ func loadingCert() {
 				recordCertInfoCacheKey := public.RecordCertInfo + "_" + cloudProvider + "_" + cloudName
 				value, err := json.Marshal(recordCerts)
 				if err != nil {
-					logger.Error(fmt.Sprintf("[ %s ] marshal domain list failed: %v", recordCertInfoCacheKey, err))
-				}
-				if err := public.CertCache.Set(recordCertInfoCacheKey, value); err != nil {
-					logger.Error(fmt.Sprintf("[ %s ] cache domain list failed: %v", recordCertInfoCacheKey, err))
+					logger.Error(fmt.Sprintf("[ %s ] marshal cert list failed: %v", recordCertInfoCacheKey, err))
+				} else {
+					if err := public.CertCache.Set(recordCertInfoCacheKey, value); err != nil {
+						logger.Error(fmt.Sprintf("[ %s ] cache cert list failed: %v", recordCertInfoCacheKey, err))
+					} else {
+						logger.Info(fmt.Sprintf("[ %s ] successfully cached %d cert records", recordCertInfoCacheKey, len(recordCerts)))
+					}
 				}
 				mu.Unlock()
 			}(cloudProvider, cloudAccount["name"], cloudAccount)

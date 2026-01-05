@@ -248,11 +248,11 @@ func (a *AliyunDNS) ListDomains() ([]Domain, error) {
 	// 1. 采集公网域名
 	publicDomains, err := a.listPublicDomains()
 	if err != nil {
-		logger.Error(fmt.Sprintf("采集公网域名失败: %v", err))
+		logger.Error(fmt.Sprintf("Cloudname: %s,采集公网域名失败: %v", a.account.CloudName, err))
 		// 不中断流程，继续采集内网域名
 	} else {
 		allDomains = append(allDomains, publicDomains...)
-		logger.Info(fmt.Sprintf("采集到 %d 个公网域名", len(publicDomains)))
+		logger.Info(fmt.Sprintf("Cloudname: %s,采集到 %d 个公网域名", a.account.CloudName, len(publicDomains)))
 	}
 
 	// 2. 根据配置决定是否采集内网域名
@@ -260,14 +260,14 @@ func (a *AliyunDNS) ListDomains() ([]Domain, error) {
 	if a.account.EnablePrivateDNS {
 		privateDomains, err = a.listPrivateDomains()
 		if err != nil {
-			logger.Error(fmt.Sprintf("采集内网域名失败: %v", err))
+			logger.Error(fmt.Sprintf("Cloudname: %s,采集内网域名失败: %v", a.account.CloudName, err))
 			// 不中断流程
 		} else {
 			allDomains = append(allDomains, privateDomains...)
-			logger.Info(fmt.Sprintf("采集到 %d 个内网域名", len(privateDomains)))
+			logger.Info(fmt.Sprintf("Cloudname: %s,采集到 %d 个内网域名", a.account.CloudName, len(privateDomains)))
 		}
 	} else {
-		logger.Info("内网域名监控已禁用，跳过内网域名采集")
+		logger.Info(fmt.Sprintf("Cloudname: %s,内网域名监控已禁用，跳过内网域名采集", a.account.CloudName))
 	}
 
 	logger.Info(fmt.Sprintf("总共采集到 %d 个域名（公网: %d, 内网: %d）",
@@ -295,7 +295,7 @@ func (a *AliyunDNS) listPublicDomains() ([]Domain, error) {
 
 		response, err := client.DescribeDomains(request)
 		if err != nil {
-			return nil, fmt.Errorf("查询公网DNS域名失败: %v", err)
+			return nil, fmt.Errorf("Cloudname: %s, 查询公网DNS域名失败: %v", a.account.CloudName, err)
 		}
 
 		if response.Body.Domains == nil || len(response.Body.Domains.Domain) == 0 {
@@ -339,7 +339,7 @@ func (a *AliyunDNS) listPrivateDomains() ([]Domain, error) {
 
 		response, err := client.DescribeZones(request)
 		if err != nil {
-			return nil, fmt.Errorf("查询内网DNS域名失败: %v", err)
+			return nil, fmt.Errorf("Cloudname: %s,查询内网DNS域名失败: %v", a.account.CloudName, err)
 		}
 
 		if response.Body.Zones == nil || len(response.Body.Zones.Zone) == 0 {
@@ -433,11 +433,11 @@ func (a *AliyunDNS) ListRecords() ([]Record, error) {
 	// 1. 采集公网DNS记录
 	publicRecords, err := a.listPublicRecords()
 	if err != nil {
-		logger.Error(fmt.Sprintf("采集公网DNS记录失败: %v", err))
+		logger.Error(fmt.Sprintf("Cloudname: %s,采集公网DNS记录失败: %v", a.account.CloudName, err))
 		// 不中断流程，继续采集内网记录
 	} else {
 		allRecords = append(allRecords, publicRecords...)
-		logger.Info(fmt.Sprintf("采集到 %d 条公网DNS记录", len(publicRecords)))
+		logger.Info(fmt.Sprintf("Cloudname: %s,采集到 %d 条公网DNS记录", a.account.CloudName, len(publicRecords)))
 	}
 
 	// 2. 根据配置决定是否采集内网DNS记录
@@ -445,14 +445,14 @@ func (a *AliyunDNS) ListRecords() ([]Record, error) {
 	if a.account.EnablePrivateDNS {
 		privateRecords, err = a.listPrivateRecords()
 		if err != nil {
-			logger.Error(fmt.Sprintf("采集内网DNS记录失败: %v", err))
+			logger.Error(fmt.Sprintf("Cloudname: %s, 采集内网DNS记录失败: %v", a.account.CloudName, err))
 			// 不中断流程
 		} else {
 			allRecords = append(allRecords, privateRecords...)
-			logger.Info(fmt.Sprintf("采集到 %d 条内网DNS记录", len(privateRecords)))
+			logger.Info(fmt.Sprintf("Cloudname: %s, 采集到 %d 条内网DNS记录", a.account.CloudName, len(privateRecords)))
 		}
 	} else {
-		logger.Info("内网域名监控已禁用，跳过内网DNS记录采集")
+		logger.Info(fmt.Sprintf("Cloudname: %s,内网域名监控已禁用，跳过内网DNS记录采集", a.account.CloudName))
 	}
 
 	logger.Info(fmt.Sprintf("总共采集到 %d 条DNS记录（公网: %d, 内网: %d）",
@@ -466,7 +466,7 @@ func (a *AliyunDNS) listPublicRecords() ([]Record, error) {
 	// 首先获取所有公网域名
 	publicDomains, err := a.listPublicDomains()
 	if err != nil {
-		return nil, fmt.Errorf("获取公网域名列表失败: %v", err)
+		return nil, fmt.Errorf("Cloudname: %s,获取公网域名列表失败: %v", a.account.CloudName, err)
 	}
 
 	client, err := a.createDNSClient()
@@ -480,7 +480,7 @@ func (a *AliyunDNS) listPublicRecords() ([]Record, error) {
 	for _, domain := range publicDomains {
 		records, err := a.getDomainRecords(client, domain.DomainName, domain.DomainID, "public")
 		if err != nil {
-			logger.Error(fmt.Sprintf("获取域名 %s 的DNS记录失败: %v", domain.DomainName, err))
+			logger.Error(fmt.Sprintf("Cloudname: %s, 获取域名 %s 的DNS记录失败: %v", a.account.CloudName, domain.DomainName, err))
 			continue // 继续处理下一个域名
 		}
 		allRecords = append(allRecords, records...)
@@ -494,7 +494,7 @@ func (a *AliyunDNS) listPrivateRecords() ([]Record, error) {
 	// 首先获取所有内网域名
 	privateDomains, err := a.listPrivateDomains()
 	if err != nil {
-		return nil, fmt.Errorf("获取内网域名列表失败: %v", err)
+		return nil, fmt.Errorf("Cloudname: %s,获取内网域名列表失败: %v", a.account.CloudName, err)
 	}
 
 	client, err := a.createPVTZClient("cn-hangzhou")
@@ -510,7 +510,7 @@ func (a *AliyunDNS) listPrivateRecords() ([]Record, error) {
 		zoneId := strings.TrimPrefix(domain.DomainID, "private_")
 		records, err := a.getPrivateZoneRecords(client, zoneId, domain.DomainName, domain.DomainID, "private")
 		if err != nil {
-			logger.Error(fmt.Sprintf("获取内网域名 %s 的DNS记录失败: %v", domain.DomainName, err))
+			logger.Error(fmt.Sprintf("Cloudname: %s,获取内网域名 %s 的DNS记录失败: %v", a.account.CloudName, domain.DomainName, err))
 			continue // 继续处理下一个域名
 		}
 		allRecords = append(allRecords, records...)
@@ -534,7 +534,7 @@ func (a *AliyunDNS) getDomainRecords(client *alidns.Client, domainName, domainID
 
 		response, err := client.DescribeDomainRecords(request)
 		if err != nil {
-			return nil, fmt.Errorf("查询域名 %s 的DNS记录失败: %v", domainName, err)
+			return nil, fmt.Errorf("Cloudname: %s,查询域名 %s 的DNS记录失败: %v", a.account.CloudName, domainName, err)
 		}
 
 		if response.Body.DomainRecords == nil || len(response.Body.DomainRecords.Record) == 0 {
@@ -572,7 +572,7 @@ func (a *AliyunDNS) getPrivateZoneRecords(client *pvtz.Client, zoneId, domainNam
 
 		response, err := client.DescribeZoneRecords(request)
 		if err != nil {
-			return nil, fmt.Errorf("查询内网域名 %s 的DNS记录失败: %v", domainName, err)
+			return nil, fmt.Errorf("Cloudname: %s, 查询内网域名 %s 的DNS记录失败: %v", a.account.CloudName, domainName, err)
 		}
 
 		if response.Body.Records == nil || len(response.Body.Records.Record) == 0 {
