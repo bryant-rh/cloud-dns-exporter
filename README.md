@@ -1,3 +1,6 @@
+fork 自https://github.com/opsre/cloud_dns_exporter 
+新增 aliyun 内网域名监控，支持 sts 授权
+
 [English](./README-en.md) | 简体中文
 
 <div align="center">

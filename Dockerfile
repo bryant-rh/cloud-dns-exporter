@@ -1,23 +1,30 @@
-FROM registry.cn-hangzhou.aliyuncs.com/eryajf/golang:1.22.2-alpine3.19-eryajf  AS builder
+FROM --platform=linux/amd64 golang:1.24.11-alpine  AS builder
 
 WORKDIR /app
 ENV GOPROXY="https://goproxy.io"
 
 ADD . .
 
-RUN make build-linux && upx -9 cloud_dns_exporter
+RUN sed -i "s/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g" /etc/apk/repositories \
+    && apk upgrade && apk add --no-cache --virtual .build-deps \
+    ca-certificates upx tzdata
+RUN make build-linux && upx -9 cloud-dns-exporter
+#RUN make build-linux
 
-FROM registry.cn-hangzhou.aliyuncs.com/eryajf/alpine:3.19
+FROM --platform=linux/amd64 alpine:3.19
 
 WORKDIR /app
 
-LABEL maintainer="eryajf"
+LABEL maintainer="bryant-rh"
+RUN sed -i "s/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g" /etc/apk/repositories \
+    && apk upgrade && apk add --no-cache --virtual .build-deps \
+    ca-certificates upx tzdata
 
-COPY --from=builder /app/config.example.yaml config.yaml
-COPY --from=builder /app/cloud_dns_exporter .
+#COPY --from=builder /app/config.example.yaml config.yaml
+COPY --from=builder /app/cloud-dns-exporter .
 
 EXPOSE 21798
 
-RUN chmod +x /app/cloud_dns_exporter
+RUN chmod +x /app/cloud-dns-exporter
 
-CMD [ "/app/cloud_dns_exporter" ]
+CMD [ "/app/cloud-dns-exporter" ]

@@ -1,12 +1,12 @@
 version: '3'
 services:
-  cloud_dns_exporter:
-    image: registry.cn-hangzhou.aliyuncs.com/bryant-rh/cloud_dns_exporter:latest
-    container_name: cloud_dns_exporter
+  cloud-dns-exporter:
+    image: registry.cn-hangzhou.aliyuncs.com/bryant-rh/cloud-dns-exporter:latest
+    container_name: cloud-dns-exporter
     ports:
       - "21798:21798"
     configs:
-      - source: cloud_dns_exporter_config
+      - source: cloud-dns-exporter_config
         target: /app/config.yaml
     environment:
       - TZ=Asia/Shanghai
@@ -36,7 +36,7 @@ services:
 # 示例配置
 configs:
   # 云解析配置,以阿里云DNS为例
-  cloud_dns_exporter_config:
+  cloud-dns-exporter_config:
     content: |
       cloud_providers:
         aliyun:
@@ -48,11 +48,11 @@ configs:
   prometheus_config:
     content: |
       scrape_configs:
-        - job_name: 'cloud_dns_exporter'
+        - job_name: 'cloud-dns-exporter'
           metrics_path: 'metrics'
           scrape_interval: 15s
           static_configs:
-            - targets: ['cloud_dns_exporter:21798']
+            - targets: ['cloud-dns-exporter:21798']
 
 volumes:
   grafana_data:
