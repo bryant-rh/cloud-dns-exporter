@@ -1,0 +1,12 @@
+custom_records:
+  - "www.baidu.com"
+  - "wiki.bryant-rh.net"
+cloud_providers:
+  # 测试配置 - 请替换为你的真实凭证
+  aliyun:
+    accounts:
+      - name: test-account
+        secretId: "your_access_key_id"
+        secretKey: "your_access_key_secret"
+        # STS 认证配置（可选）
+        roleArn: "acs:ram::123456789012:role/AliyunDNSExporterRole"
